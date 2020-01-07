@@ -1,45 +1,31 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Injectable, Output, EventEmitter } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { User } from 'src/app/models/user';
 import { Batch } from 'src/app/models/batch';
+import { Router } from '@angular/router';
 
 @Injectable({
   	providedIn: 'root'
 })
 export class UserService {
+	@Output() fireIsLoggedIn: EventEmitter<any> = new EventEmitter<any>();
 
-	url: string = 'http://localhost:8080/users';
+	url: string = 'http://localhost:8080/users/';
 	user: User = new User();
 	batch: Batch = new Batch();
 
-	constructor(private http: HttpClient) { }
+	constructor(private http: HttpClient, private router: Router) { }
 
-	createRider(userName, firstName, lastName, email, phone, batchNum) {
-		this.batch.batchNumber = batchNum;
+	getAllUsers() {
+		return this.http.get<User[]>(this.url);
+	}
 
-		this.user.userName = userName;
-		this.user.firstName = firstName;
-		this.user.lastName = lastName;
-		this.user.email = email;
-		this.user.phoneNumber = phone;
-		this.user.batch = this.batch;
-		this.user.isDriver = false;
-		this.user.isActive = true;
-		this.user.isAcceptingRides = false;
-
-		return this.http.post(this.url, this.user, {observe: 'response'}).subscribe(
-			(response) => {
-				console.log(response);
-				return true;
-			},
-			(error) => {
-				console.warn(error);
-				return false;
-			}
-		);
+	getUserById(idParam: number){
+		return this.http.get<User>(this.url+idParam).toPromise();
 	}
 
 	createDriver(userName, firstName, lastName, email, phone, batchNum) {
+
 		this.batch.batchNumber = batchNum;
 
 		this.user.userName = userName;
@@ -48,19 +34,46 @@ export class UserService {
 		this.user.email = email;
 		this.user.phoneNumber = phone;
 		this.user.batch = this.batch;
-		this.user.isDriver = true;
-		this.user.isActive = true;
-		this.user.isAcceptingRides = true;
+		this.user.driver = false;
+		this.user.active = true;
+		this.user.acceptingRides = false;
 
-		return this.http.post(this.url, this.user, {observe: 'response'}).subscribe(
+		this.http.post(this.url, this.user, {observe: 'response'}).subscribe(
 			(response) => {
-				console.log(response);
-				return true;
+				let userId = response.body[Object.keys(response.body)[0]];
+				sessionStorage.setItem('auth', userId);
+				this.fireIsLoggedIn.emit(response.body);
+				this.router.navigate(['new/car']);
 			},
 			(error) => {
 				console.warn(error);
-				return false;
+				alert("Server Error! Please Try Again Later.");
 			}
 		);
+
+	}
+
+	getEmitter() {
+		return this.fireIsLoggedIn;
+	}
+
+	updateIsDriver(isDriver, userId) {
+
+		this.getUserById(userId)
+			.then((response) => {
+				this.user = response;
+				this.user.driver = isDriver;
+				this.user.acceptingRides = isDriver === true;
+
+				this.http.put(this.url+userId, this.user).subscribe(
+					(response) => {
+					  console.log(response);
+					},
+					  (error) => console.warn(error)
+				);
+			})
+			.catch(e => {
+				console.warn(e);
+			})
 	}
 }

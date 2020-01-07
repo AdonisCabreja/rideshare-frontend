@@ -1,9 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { UserService } from 'src/app/services/user-service/user.service';
-import { CarService } from 'src/app/services/car-service/car.service';
-import { User } from 'src/app/models/user';
 import { BatchService } from 'src/app/services/batch-service/batch.service';
 import { Batch } from 'src/app/models/batch';
+import { Router } from '@angular/router';
 
 @Component({
 	selector: 'app-driver-register',
@@ -20,22 +19,19 @@ export class DriverRegisterComponent implements OnInit {
 	email: string = '';
 	phone: string = '';
 	batchNum: number;
-	color: string = '';
-	seats: number;
-	make: string = '';
-	model: string = '';
-	year: number;
 
-	enable: boolean = true;
-	failed: boolean = false;
-
-	constructor(private userService: UserService, private carService: CarService, private batchService: BatchService) { }
+	constructor(private userService: UserService, private batchService: BatchService, private router: Router) { }
 
 	ngOnInit() {
-		this.batchService.getAllBatches()
-			.subscribe(allBatches => {
-				this.batches = allBatches;
-		});
+		if (sessionStorage.getItem('auth')) {
+			this.router.navigate(['home']);
+		} else {
+			this.batchService.getAllBatches()
+				.subscribe(allBatches => {
+					this.batches = allBatches;
+					this.batchNum = this.batches[0].batchNumber;
+			});
+		}
 	}
 
 	validateUserName() {
@@ -43,40 +39,34 @@ export class DriverRegisterComponent implements OnInit {
 	}
 
 	validateName(name: string) {
-		return /^([a-zA-z]){1,20}$/.test(name);
+		return /^([a-zA-z]){1,20}$/.test(name) && name.length < 20;
 	}
 
 	nameFormat(name: string) {
 		return name[0].toUpperCase() + name.slice(1).toLowerCase();
 	}
 
+	phoneFormat(phone: string) {
+		return phone.replace(/[^0-9]/g, '').replace(/(\d{3})(\d{3})(\d{3})/, "($1) $2-$3");
+	}
+
 	validateEmail() {
-		return /^\w+@\w+\.\w{2,4}$/.test(this.email);
+		return /^[\.|\w]+@\w+\.\w{2,4}$/.test(this.email);
 	}
 
 	validatePhone() {
 		return /^\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})$/.test(this.phone);
 	}
 
-	// signUp() {
-	// 	if (this.validateUserName() && this.validateName(this.firstName) && this.validateName(this.lastName) && this.validateEmail() && this.validatePhone()) {
-	// 		this.enable = false;
-	// 		this.phone = this.phone.replace(/(\d{3})(\d{3})(\d{3})/, "($1) $2-$3");
-
-	// 		if (this.userService.createDriver(this.userName, this.nameFormat(this.firstName), this.nameFormat(this.lastName), this.email, this.phone, this.batchNum)) {
-	// 			console.log('success')
-	// 			this.carService.createCar(this.color, this.seats, this.make, this.model, this.year, 10);
-	// 		} else {
-	// 			this.enable = true;
-	// 			this.failed = true;
-	// 			setTimeout(() => this.failed = false, 5000);
-	// 		}
-
-	// 	}
-	// }
+	changeLocation(event) {
+		let option = event.target.options.selectedIndex;
+		this.batchNum = this.batches[option].batchNumber;
+	}
 
 	signUp() {
-		console.log(this.batchNum);
+		if (this.validateUserName() && this.validateName(this.firstName) && this.validateName(this.lastName) && this.validateEmail() && this.validatePhone()) {
+			this.userService.createDriver(this.userName, this.nameFormat(this.firstName), this.nameFormat(this.lastName), this.email, this.phoneFormat(this.phone), this.batchNum)
+		}
 	}
 
 }

@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { UserService } from 'src/app/services/user-service/user.service';
-import { User } from 'src/app/models/user';
 import { BatchService } from 'src/app/services/batch-service/batch.service';
 import { Batch } from 'src/app/models/batch';
+import { Router } from '@angular/router';
 
 @Component({
 	selector: 'app-rider-register',
@@ -51,23 +51,6 @@ export class RiderRegisterComponent implements OnInit {
 	validatePhone() {
 		return /^\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})$/.test(this.phone);
 	}
-
-	// signUp() {
-	// 	if (this.validateUserName() && this.validateName(this.firstName) && this.validateName(this.lastName) && this.validateEmail() && this.validatePhone()) {
-	// 		this.enable = false;
-	// 		this.phone = this.phone.replace(/(\d{3})(\d{3})(\d{3})/, "($1) $2-$3");
-
-	// 		if (this.userService.createDriver(this.userName, this.nameFormat(this.firstName), this.nameFormat(this.lastName), this.email, this.phone, this.batchNum)) {
-	// 			console.log('success')
-	// 			this.carService.createCar(this.color, this.seats, this.make, this.model, this.year, 10);
-	// 		} else {
-	// 			this.enable = true;
-	// 			this.failed = true;
-	// 			setTimeout(() => this.failed = false, 5000);
-	// 		}
-
-	// 	}
-	// }
 
 	signUp() {
 		console.log(this.batchNum);
